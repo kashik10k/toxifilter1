@@ -4,6 +4,7 @@ from pathlib import Path
 import random
 import numpy as np
 import pandas as pd
+import argparse
 from dataclasses import dataclass
 
 import torch
@@ -103,10 +104,13 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
     # Load data
-    csv_path = resolve_csv_path()
+    # ✅ Force dataset to sexual_binary_prefilled.csv
+    csv_path = "C:/Projects/keyboard1/dataset/sexual_binary_prefilled.csv"
+
     df = pd.read_csv(csv_path).dropna(subset=["text", "label"])
     df["label"] = df["label"].astype(int).clip(0, 1)
     df = df[df["text"].astype(str).str.len() >= 2].reset_index(drop=True)
+
 
     counts = df["label"].value_counts().to_dict()
     neg, pos = counts.get(0, 1), counts.get(1, 1)
