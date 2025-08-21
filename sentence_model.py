@@ -1,45 +1,26 @@
 import torch
-from transformers import BertTokenizer, BertForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-# Load tokenizer (same one used during training)
-tokenizer = BertTokenizer.from_pretrained("toxic_model")
+class SentenceModel:
+    def __init__(self, model_dir: str, pt_path: str | None = None,
+                 device: str | None = None, threshold: float = 0.5,
+                 max_length: int = 256):
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
+        self.model = AutoModelForSequenceClassification.from_pretrained(model_dir)
+        if pt_path:
+            sd = torch.load(pt_path, map_location="cpu")
+            self.model.load_state_dict(sd, strict=False)
+        self.model.to(self.device).eval()
+        self.threshold = float(threshold)
+        self.max_length = int(max_length)
 
-# Step 1: Create model architecture
-model = BertForSequenceClassification.from_pretrained(
-    "toxic_model"
-)
-
-# Step 2: Load trained weights
-state_dict = torch.load("model/custom_toxic_model.pt", map_location=torch.device("cpu"))
-model.load_state_dict(state_dict)
-
-# Step 3: Set model to evaluation mode
-model.eval()
-
-# Prediction function
-def predict_toxicity(text):
-    # Tokenize input
-    inputs = tokenizer(
-        text, 
-        return_tensors="pt", 
-        truncation=True, 
-        padding=True, 
-        max_length=128
-    )
-    with torch.no_grad():
-        outputs = model(**inputs)
-        probs = torch.softmax(outputs.logits, dim=1)
-        predicted_class = torch.argmax(probs, dim=1).item()
-    return "toxic" if predicted_class == 1 else "non-toxic"
-
-if __name__ == "__main__":
-    try:
-        with open("input.txt", "r", encoding="utf-8") as f:
-            lines = [line.strip() for line in f if line.strip()]
-    except FileNotFoundError:
-        print("❌ input.txt not found! Please create it in the same folder.")
-        exit()
-
-    for line in lines:
-        print(f"Text: {line}")
-        print(f"Prediction: {predict_toxicity(line)}\n")
+    @torch.inference_mode()
+    def predict(self, text: str) -> dict:
+        enc = self.tokenizer(
+            text, return_tensors="pt", truncation=True, padding=False,
+            max_length=self.max_length
+        ).to(self.device)
+        logits = self.model(**enc).logits.squeeze(0)
+        p1 = torch.softmax(logits, dim=-1)[1].item()
+        return {"prob": p1, "label": int(p1 >= self.threshold)}
