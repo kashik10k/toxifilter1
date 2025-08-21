@@ -1,0 +1,9 @@
+torch
+transformers
+pandas
+numpy
+pyyaml
+keyboard
+pytest
+# optional on Windows notifications:
+# win10toast

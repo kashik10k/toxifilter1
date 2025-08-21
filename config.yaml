@@ -1,0 +1,24 @@
+# Models
+toxic_model_dir: "toxic_model"
+toxic_pt: "model/custom_toxic_model.pt"
+sexual_model_dir: "sexual_model"
+sexual_pt: "model/custom_sexual_model.pt"
+
+# Thresholds
+threshold_toxic: 0.55
+threshold_sexual: 0.55
+max_length: 256
+
+# Runtime
+trigger_keys: ["space", "enter"]
+mask: "****"
+
+# Escalation
+suggest_threshold: 1
+warn_threshold: 2
+enforce_threshold: 3
+decay_after_keystrokes: 800
+
+# Logging
+log_file: "logs/app.log"
+log_level: "INFO"
