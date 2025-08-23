@@ -1,7 +1,9 @@
+# tests/test_text_sanitizer.py
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from text_sanitizer import Sanitizer
+from escalation import Escalator, EscalationConfig
 
 class Dummy:
     def predict(self, text):
@@ -14,11 +16,15 @@ class Dummy:
         }
 
 def test_mask_exact_and_fuzzy():
-    san = Sanitizer(Dummy(), mask="****", prob_gate=0.6)
+    # Force enforce on first occurrence for deterministic masking
+    esc = Escalator(EscalationConfig(suggest_threshold=0, warn_threshold=0, enforce_threshold=0))
+    san = Sanitizer(Dummy(), mask="****", prob_gate=0.6, escalator=esc)
+
     s = "You idiot, watch v!deos about s3x"
     out = san.sanitize(s)
-    assert out["regex_spans"]      # fuzzy caught something
-    assert "****" in out["sanitized"]
+
+    assert out["regex_spans"]            # fuzzy/exact caught terms
+    assert "****" in out["sanitized"]    # masked on first call due to thresholds
     assert out["flagged"] is True
 
 def test_neutral_passes():
