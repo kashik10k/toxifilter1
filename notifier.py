@@ -43,7 +43,8 @@ def select(term: str, options: List[str]) -> Optional[str]:
     tk.Button(aux, text="Mask", width=10, command=lambda: choose("")).grid(row=0, column=0, padx=4)
     tk.Button(aux, text="Skip", width=10, command=lambda: choose(None)).grid(row=0, column=1, padx=4)
 
-    # Keyboard shortcuts: 1/2/3, 0=Mask, Esc=Skip
+
+
     def on_key(e):
         if e.keysym in ("Escape",):
             choose(None)
